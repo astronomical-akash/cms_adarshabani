@@ -53,23 +53,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
     // Set initial class defaults once curriculum is loaded
     const classes = Object.keys(curriculum);
     if (classes.length > 0 && !selectedClass) setSelectedClass(classes[0]);
-  }, [curriculum]);
-
-  useEffect(() => {
-    // Apply initial values if provided
-    if (initialValues) {
-      try {
-        if (initialValues.class) setSelectedClass(initialValues.class);
-        if (initialValues.subject) setSelectedSubject(initialValues.subject);
-        if (initialValues.chapter) setSelectedChapter(initialValues.chapter);
-        if (initialValues.topic) setSelectedTopic(initialValues.topic);
-        if (initialValues.subtopic) setSelectedSubtopic(initialValues.subtopic);
-        if (initialValues.bloomsLevel) setSelectedBlooms(initialValues.bloomsLevel);
-      } catch (error) {
-        console.error('Error applying initial values:', error);
-      }
-    }
-  }, [initialValues]);
+  }, [curriculum, selectedClass]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
