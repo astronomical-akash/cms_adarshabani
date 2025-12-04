@@ -150,8 +150,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
                     className="group bg-white p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer flex items-center gap-4"
                   >
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${material.type.includes('image') ? 'bg-purple-50 text-purple-600' :
-                        material.type.includes('mp4') ? 'bg-rose-50 text-rose-600' :
-                          'bg-blue-50 text-blue-600'
+                      material.type.includes('mp4') ? 'bg-rose-50 text-rose-600' :
+                        'bg-blue-50 text-blue-600'
                       }`}>
                       {getIconForType(material.type)}
                     </div>
@@ -321,8 +321,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
                                   {/* Default View (Hidden on Hover) */}
                                   <div className="flex flex-col items-center gap-1 group-hover/cell:opacity-0 transition-opacity duration-200">
                                     <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border shadow-sm ${allApproved
-                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                      ? 'bg-green-50 text-green-700 border-green-200'
+                                      : 'bg-amber-50 text-amber-700 border-amber-200'
                                       }`}>
                                       {allApproved ? <CheckCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
                                       <span>View ({materialCount})</span>

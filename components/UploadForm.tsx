@@ -147,17 +147,39 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
     }
   };
 
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+
   const handleFileUpload = async (file: File): Promise<string | null> => {
     try {
+      // Check file size (Supabase free tier limit is 50MB, paid is 5GB)
+      const maxSize = 50 * 1024 * 1024; // 50MB
+      if (file.size > maxSize) {
+        alert(`File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds the 50MB limit. Please use a smaller file.`);
+        return null;
+      }
+
+      setIsUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('materials')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
+        setIsUploading(false);
+        if (uploadError.message.includes('row-level security')) {
+          alert('Upload failed: You may not have permission to upload files. Please check your authentication.');
+        } else if (uploadError.message.includes('size')) {
+          alert('Upload failed: File is too large.');
+        } else {
+          alert(`Upload failed: ${uploadError.message}`);
+        }
         throw uploadError;
       }
 
@@ -165,9 +187,11 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
         .from('materials')
         .getPublicUrl(filePath);
 
+      setIsUploading(false);
       return data.publicUrl;
     } catch (error) {
       console.error('Error uploading file:', error);
+      setIsUploading(false);
       return null;
     }
   };
@@ -178,6 +202,8 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
       alert("Please fill all required hierarchy fields.");
       return;
     }
+
+    if (isSaving || isUploading) return; // Prevent duplicate submissions
 
     setIsSaving(true);
 
@@ -425,11 +451,25 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
           </button>
           <button
             type="submit"
-            disabled={isSaving}
-            className="px-8 py-2.5 bg-black text-white rounded-md hover:bg-gray-800 flex items-center gap-2 shadow-lg"
+            disabled={isSaving || isUploading}
+            className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 disabled:bg-gray-300 transition-colors flex items-center gap-2"
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {isSaving ? 'Submit for Review' : 'Upload Material'}
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Uploading File...</span>
+              </>
+            ) : isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                <span>Submit Material</span>
+              </>
+            )}
           </button>
         </div>
       </form>
