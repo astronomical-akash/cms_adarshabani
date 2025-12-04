@@ -23,12 +23,12 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
   const [description, setDescription] = useState('');
 
   // Hierarchy State
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedChapter, setSelectedChapter] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('');
-  const [selectedSubtopic, setSelectedSubtopic] = useState('');
-  const [selectedBlooms, setSelectedBlooms] = useState<BloomsLevel>(BloomsLevel.LEVEL_0);
+  const [selectedClass, setSelectedClass] = useState(initialValues?.class || '');
+  const [selectedSubject, setSelectedSubject] = useState(initialValues?.subject || '');
+  const [selectedChapter, setSelectedChapter] = useState(initialValues?.chapter || '');
+  const [selectedTopic, setSelectedTopic] = useState(initialValues?.topic || '');
+  const [selectedSubtopic, setSelectedSubtopic] = useState(initialValues?.subtopic || '');
+  const [selectedBlooms, setSelectedBlooms] = useState<BloomsLevel>(initialValues?.bloomsLevel || BloomsLevel.LEVEL_0);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
