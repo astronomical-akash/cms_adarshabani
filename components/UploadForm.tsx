@@ -264,7 +264,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Upload New Material</h2>
-          <p className="text-sm text-gray-500">Posting as: <span className="font-semibold text-gray-900">{currentUser?.name}</span></p>
+          <p className="text-sm text-gray-500">Posting as: <span className="font-semibold text-gray-900">{currentUser?.full_name || currentUser?.email}</span></p>
         </div>
         <button
           type="button"
