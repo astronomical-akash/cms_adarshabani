@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Material, BloomsLevel, CurriculumTree, MaterialStatus } from '../types';
 import { BLOOMS_LEVELS, BLOOMS_DESCRIPTIONS } from '../constants';
@@ -78,7 +77,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
   const handleAnalyzeGaps = async () => {
     setIsAnalyzing(true);
     const result = await generateGapAnalysis(selectedSubject, selectedClass, coverageStats);
-    setAnalysis(result);
+    setAnalysis(result || null);
     setIsAnalyzing(false);
   };
 

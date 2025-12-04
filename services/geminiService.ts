@@ -1,6 +1,12 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { BloomsLevel } from '../types';
+
+// Declare process to satisfy TypeScript compiler since it's injected by Vite
+declare var process: {
+  env: {
+    API_KEY: string;
+  };
+};
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -70,6 +76,10 @@ export const analyzeContentForClassification = async (
       }
     });
 
+    if (!response.text) {
+        throw new Error("No response text received from Gemini");
+    }
+
     return JSON.parse(response.text);
   } catch (error) {
     console.error("Gemini classification failed:", error);
@@ -103,7 +113,7 @@ export const generateGapAnalysis = async (
       model,
       contents: prompt,
     });
-    return response.text;
+    return response.text || "Analysis generated but text was empty.";
   } catch (error) {
     console.error("Gemini gap analysis failed:", error);
     return "Could not generate analysis at this time.";
