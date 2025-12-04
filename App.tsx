@@ -24,31 +24,39 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
-  
+
   // State to hold pre-filled data when navigating from Dashboard to Upload
   const [uploadDefaults, setUploadDefaults] = useState<any>(null);
 
   useEffect(() => {
     // Check for logged in user
-    const loggedInUser = getCurrentUser();
-    setUser(loggedInUser);
+    const checkUser = async () => {
+      const loggedInUser = await getCurrentUser();
+      setUser(loggedInUser);
+    };
+    checkUser();
   }, []);
 
   useEffect(() => {
     // Load initial data
-    if (user) {
-        setMaterials(getMaterials());
-    }
+    const loadMaterials = async () => {
+      if (user) {
+        const data = await getMaterials();
+        setMaterials(data);
+      }
+    };
+    loadMaterials();
   }, [currentView, user]);
 
-  const handleLogin = () => {
-      setUser(getCurrentUser());
-      setCurrentView(View.DASHBOARD);
+  const handleLogin = async () => {
+    const loggedInUser = await getCurrentUser();
+    setUser(loggedInUser);
+    setCurrentView(View.DASHBOARD);
   };
 
-  const handleLogout = () => {
-      logout();
-      setUser(null);
+  const handleLogout = async () => {
+    await logout();
+    setUser(null);
   };
 
   const handlePreview = (material: Material) => {
@@ -63,26 +71,26 @@ const App: React.FC = () => {
 
   // If not logged in, show login screen
   if (!user) {
-      return <Login onLogin={handleLogin} />;
+    return <Login onLogin={handleLogin} />;
   }
 
   const renderContent = () => {
     switch (currentView) {
       case View.DASHBOARD:
         return (
-          <Dashboard 
-            materials={materials} 
+          <Dashboard
+            materials={materials}
             onNavigateToUpload={handleNavigateToUpload}
             onPreview={handlePreview}
           />
         );
       case View.UPLOAD:
         return (
-          <UploadForm 
+          <UploadForm
             onSuccess={() => {
               setUploadDefaults(null);
               setCurrentView(View.DASHBOARD);
-            }} 
+            }}
             initialValues={uploadDefaults}
           />
         );
@@ -93,16 +101,16 @@ const App: React.FC = () => {
       case View.MODERATOR:
         // Protect route
         if (user.role !== UserRole.MODERATOR) {
-            return <div className="p-8 text-center text-red-500">Access Denied</div>;
+          return <div className="p-8 text-center text-red-500">Access Denied</div>;
         }
         return (
           <ModeratorDashboard />
         );
       case View.PREVIEW:
         return selectedMaterial ? (
-          <Preview 
-            material={selectedMaterial} 
-            onBack={() => setCurrentView(View.DASHBOARD)} 
+          <Preview
+            material={selectedMaterial}
+            onBack={() => setCurrentView(View.DASHBOARD)}
           />
         ) : (
           <div className="p-8 text-center">Material not found</div>
@@ -117,26 +125,26 @@ const App: React.FC = () => {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed inset-y-0 z-10">
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
-           <GraduationCap className="w-8 h-8 text-indigo-600 mr-2" />
-           <span className="font-bold text-gray-900 tracking-tight">ADARSHABANI</span>
+          <GraduationCap className="w-8 h-8 text-indigo-600 mr-2" />
+          <span className="font-bold text-gray-900 tracking-tight">ADARSHABANI</span>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          <button 
+          <button
             onClick={() => { setUploadDefaults(null); setCurrentView(View.DASHBOARD); }}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${currentView === View.DASHBOARD && !selectedMaterial ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <LayoutDashboard className="w-5 h-5" />
             Dashboard Matrix
           </button>
-          <button 
+          <button
             onClick={() => { setUploadDefaults(null); setCurrentView(View.UPLOAD); }}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${currentView === View.UPLOAD ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <Upload className="w-5 h-5" />
             Upload Content
           </button>
-          <button 
+          <button
             onClick={() => setCurrentView(View.HIERARCHY)}
             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${currentView === View.HIERARCHY ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}
           >
@@ -146,54 +154,53 @@ const App: React.FC = () => {
         </nav>
 
         <div className="p-4 border-t border-gray-100 flex flex-col gap-3">
-             {user.role === UserRole.MODERATOR && (
-                 <button 
-                    onClick={() => setCurrentView(View.MODERATOR)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded border transition-colors ${
-                        currentView === View.MODERATOR 
-                        ? 'bg-purple-900 text-white border-purple-900' 
-                        : 'bg-white text-purple-700 border-purple-200 hover:border-purple-300 hover:bg-purple-50'
-                    }`}
-                >
-                    <ShieldCheck className="w-4 h-4" />
-                    Moderator Dashboard
-                </button>
-             )}
+          {user.role === UserRole.MODERATOR && (
+            <button
+              onClick={() => setCurrentView(View.MODERATOR)}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded border transition-colors ${currentView === View.MODERATOR
+                ? 'bg-purple-900 text-white border-purple-900'
+                : 'bg-white text-purple-700 border-purple-200 hover:border-purple-300 hover:bg-purple-50'
+                }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Moderator Dashboard
+            </button>
+          )}
 
-             {/* User Profile Snippet */}
-             <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-between border border-gray-200">
-                <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
-                        {user.name.charAt(0)}
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-xs font-semibold text-gray-900 truncate">{user.name}</p>
-                        <p className="text-[10px] text-gray-500 uppercase truncate">{user.role}</p>
-                    </div>
-                </div>
-                <button 
-                    onClick={handleLogout}
-                    className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                    title="Logout"
-                >
-                    <LogOut className="w-4 h-4" />
-                </button>
-             </div>
+          {/* User Profile Snippet */}
+          <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-between border border-gray-200">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                {user.full_name?.charAt(0) || user.email?.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-900 truncate">{user.full_name || user.email}</p>
+                <p className="text-[10px] text-gray-500 uppercase truncate">{user.role}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-gray-400 hover:text-red-500 transition-colors p-1"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 md:ml-64 p-8">
-         {/* Mobile Header */}
-         <div className="md:hidden flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-                <GraduationCap className="w-6 h-6 text-indigo-600" />
-                <span className="font-bold text-gray-900">ADARSHABANI</span>
-            </div>
-            <button onClick={handleLogout} className="text-sm text-gray-500">Logout</button>
-         </div>
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-6 h-6 text-indigo-600" />
+            <span className="font-bold text-gray-900">ADARSHABANI</span>
+          </div>
+          <button onClick={handleLogout} className="text-sm text-gray-500">Logout</button>
+        </div>
 
-         {renderContent()}
+        {renderContent()}
       </main>
     </div>
   );

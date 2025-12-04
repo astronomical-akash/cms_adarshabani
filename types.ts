@@ -26,7 +26,8 @@ export enum UserRole {
 
 export interface User {
   id: string;
-  name: string;
+  email?: string;
+  full_name?: string;
   role: UserRole;
 }
 
@@ -35,10 +36,10 @@ export interface Material {
   title: string;
   description: string;
   type: MaterialType;
-  url: string; 
+  url: string;
   fileSize?: string;
   uploadDate: string;
-  
+
   // Hierarchy
   className: string;
   subject: string;
@@ -49,6 +50,7 @@ export interface Material {
 
   // Moderation
   status: MaterialStatus;
+  contributorId?: string;
   contributorName?: string;
 }
 

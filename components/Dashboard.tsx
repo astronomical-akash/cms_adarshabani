@@ -13,12 +13,12 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpload, onPreview }) => {
   const [curriculum, setCurriculum] = useState<CurriculumTree>({});
-  
+
   // Selections
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedChapter, setSelectedChapter] = useState('');
-  
+
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -26,16 +26,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
   const [viewingMaterials, setViewingMaterials] = useState<Material[] | null>(null);
 
   useEffect(() => {
-    const data = getCurriculum();
-    setCurriculum(data);
-    
-    // Set defaults
-    const classes = Object.keys(data);
-    if (classes.length > 0) {
-      setSelectedClass(classes[0]);
-      const subjects = Object.keys(data[classes[0]] || {});
-      if (subjects.length > 0) setSelectedSubject(subjects[0]);
-    }
+    const loadCurriculum = async () => {
+      const data = await getCurriculum();
+      setCurriculum(data);
+
+      // Set defaults
+      const classes = Object.keys(data);
+      if (classes.length > 0) {
+        setSelectedClass(classes[0]);
+        const subjects = Object.keys(data[classes[0]] || {});
+        if (subjects.length > 0) setSelectedSubject(subjects[0]);
+      }
+    };
+    loadCurriculum();
   }, []);
 
   // Handle Class Change to update Subject default
@@ -58,8 +61,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
 
   // Filter materials for current view
   const relevantMaterials = useMemo(() => {
-    return materials.filter(m => 
-      m.className === selectedClass && 
+    return materials.filter(m =>
+      m.className === selectedClass &&
       m.subject === selectedSubject &&
       (selectedChapter === '' || m.chapter === selectedChapter)
     );
@@ -83,10 +86,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
 
   const getMaterialsForCell = (chapter: string, topic: string, subtopic: string, level: BloomsLevel) => {
     // Sort by upload date descending (newest first)
-    return relevantMaterials.filter(m => 
-      m.chapter === chapter && 
-      m.topic === topic && 
-      m.subtopic === subtopic && 
+    return relevantMaterials.filter(m =>
+      m.chapter === chapter &&
+      m.topic === topic &&
+      m.subtopic === subtopic &&
       m.bloomsLevel === level
     ).sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
   };
@@ -101,94 +104,93 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
   const currentStructure = curriculum[selectedClass]?.[selectedSubject] || {};
   // Sort chapters alphabetically for better organization
   const allChapters = Object.keys(currentStructure).sort();
-  
+
   // Filter chapters based on selection
   const visibleChapters = selectedChapter ? [selectedChapter] : allChapters;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 relative">
-      
+
       {/* View Modal Overlay */}
       {viewingMaterials && viewingMaterials.length > 0 && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
-                <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
-                    <div>
-                        <h3 className="font-bold text-gray-900 text-lg">Uploaded Content</h3>
-                        <div className="text-xs text-gray-500 mt-1 flex flex-col gap-0.5">
-                            <span className="font-medium text-gray-700">
-                                {viewingMaterials[0].subject} &rsaquo; {viewingMaterials[0].chapter}
-                            </span>
-                            <span>
-                                {viewingMaterials[0].topic} &rsaquo; {viewingMaterials[0].subtopic}
-                            </span>
-                            <span className="inline-block bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded mt-1 w-fit">
-                                {viewingMaterials[0].bloomsLevel}
-                            </span>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={() => setViewingMaterials(null)}
-                        className="p-2 bg-white hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 border border-gray-200 transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-gray-50/50">
+              <div>
+                <h3 className="font-bold text-gray-900 text-lg">Uploaded Content</h3>
+                <div className="text-xs text-gray-500 mt-1 flex flex-col gap-0.5">
+                  <span className="font-medium text-gray-700">
+                    {viewingMaterials[0].subject} &rsaquo; {viewingMaterials[0].chapter}
+                  </span>
+                  <span>
+                    {viewingMaterials[0].topic} &rsaquo; {viewingMaterials[0].subtopic}
+                  </span>
+                  <span className="inline-block bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded mt-1 w-fit">
+                    {viewingMaterials[0].bloomsLevel}
+                  </span>
                 </div>
-                
-                <div className="p-2 overflow-y-auto custom-scrollbar bg-gray-50/30">
-                    <div className="space-y-2">
-                        {viewingMaterials.map((material) => (
-                            <div 
-                                key={material.id}
-                                onClick={() => {
-                                    setViewingMaterials(null); // Close modal
-                                    onPreview(material);
-                                }}
-                                className="group bg-white p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer flex items-center gap-4"
-                            >
-                                <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
-                                    material.type.includes('image') ? 'bg-purple-50 text-purple-600' : 
-                                    material.type.includes('mp4') ? 'bg-rose-50 text-rose-600' :
-                                    'bg-blue-50 text-blue-600'
-                                }`}>
-                                    {getIconForType(material.type)}
-                                </div>
-                                
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between">
-                                        <h4 className="font-semibold text-gray-800 text-sm truncate group-hover:text-indigo-700 transition-colors">
-                                            {material.title}
-                                        </h4>
-                                        {material.status === MaterialStatus.APPROVED ? (
-                                            <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-100 h-fit">Approved</span>
-                                        ) : material.status === MaterialStatus.PENDING ? (
-                                            <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 h-fit">Pending</span>
-                                        ) : (
-                                            <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 h-fit">Rejected</span>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
-                                        {material.description || "No description"}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-1.5">
-                                        <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 uppercase">
-                                            {material.type}
-                                        </span>
-                                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {new Date(material.uploadDate).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div className="text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all">
-                                    <ChevronRight className="w-5 h-5" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+              </div>
+              <button
+                onClick={() => setViewingMaterials(null)}
+                className="p-2 bg-white hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 border border-gray-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
+
+            <div className="p-2 overflow-y-auto custom-scrollbar bg-gray-50/30">
+              <div className="space-y-2">
+                {viewingMaterials.map((material) => (
+                  <div
+                    key={material.id}
+                    onClick={() => {
+                      setViewingMaterials(null); // Close modal
+                      onPreview(material);
+                    }}
+                    className="group bg-white p-3 rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer flex items-center gap-4"
+                  >
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${material.type.includes('image') ? 'bg-purple-50 text-purple-600' :
+                        material.type.includes('mp4') ? 'bg-rose-50 text-rose-600' :
+                          'bg-blue-50 text-blue-600'
+                      }`}>
+                      {getIconForType(material.type)}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between">
+                        <h4 className="font-semibold text-gray-800 text-sm truncate group-hover:text-indigo-700 transition-colors">
+                          {material.title}
+                        </h4>
+                        {material.status === MaterialStatus.APPROVED ? (
+                          <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded border border-green-100 h-fit">Approved</span>
+                        ) : material.status === MaterialStatus.PENDING ? (
+                          <span className="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 h-fit">Pending</span>
+                        ) : (
+                          <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 h-fit">Rejected</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">
+                        {material.description || "No description"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 uppercase">
+                          {material.type}
+                        </span>
+                        <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(material.uploadDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all">
+                      <ChevronRight className="w-5 h-5" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -198,7 +200,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
           <p className="text-sm text-gray-500">Track coverage across 3 levels: Readiness, Understand, Apply</p>
         </div>
         <div className="flex gap-2">
-           <select 
+          <select
             className="border rounded-md px-3 py-2 bg-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
             value={selectedClass}
             onChange={(e) => handleClassChange(e.target.value)}
@@ -207,16 +209,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <select 
+          <select
             className="border rounded-md px-3 py-2 bg-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
             value={selectedSubject}
             onChange={(e) => handleSubjectChange(e.target.value)}
           >
-             {curriculum[selectedClass] ? Object.keys(curriculum[selectedClass]).map(s => (
+            {curriculum[selectedClass] ? Object.keys(curriculum[selectedClass]).map(s => (
               <option key={s} value={s}>{s}</option>
             )) : <option>No Subjects</option>}
           </select>
-          <select 
+          <select
             className="border rounded-md px-3 py-2 bg-white text-sm focus:ring-1 focus:ring-blue-500 outline-none"
             value={selectedChapter}
             onChange={(e) => setSelectedChapter(e.target.value)}
@@ -237,7 +239,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
             <Sparkles className="w-5 h-5" />
             <span>Gemini Insights</span>
           </div>
-          <button 
+          <button
             onClick={handleAnalyzeGaps}
             disabled={isAnalyzing}
             className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-full hover:bg-indigo-700 disabled:opacity-50 transition-colors"
@@ -271,8 +273,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
                 {BLOOMS_LEVELS.map(level => (
                   <th key={level} className="px-4 py-3 border-b text-center min-w-[140px]">
                     <div className="flex flex-col">
-                        <span>{level.split('(')[0]}</span>
-                        <span className="text-[10px] text-gray-500 font-normal">{BLOOMS_DESCRIPTIONS[level]}</span>
+                      <span>{level.split('(')[0]}</span>
+                      <span className="text-[10px] text-gray-500 font-normal">{BLOOMS_DESCRIPTIONS[level]}</span>
                     </div>
                   </th>
                 ))}
@@ -282,114 +284,113 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
               {visibleChapters.map(chapter => {
                 const topicsObj = currentStructure[chapter];
                 if (!topicsObj) return null;
-                
+
                 // Sort topics alphabetically
                 const topicNames = Object.keys(topicsObj).sort();
                 if (topicNames.length === 0) return null;
-                
+
                 return topicNames.map((topic) => {
                   const subtopics = topicsObj[topic];
-                  
+
                   // Sort subtopics alphabetically
                   return subtopics.sort().map((subtopic: string) => (
                     <tr key={`${chapter}-${topic}-${subtopic}`} className="hover:bg-gray-50 group/row">
                       <td className="px-4 py-3 border-r bg-white">
                         <div className="font-semibold text-gray-800">{chapter}</div>
-                         <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                            <span className="font-medium text-gray-600">{topic}</span>
-                            <span>&rsaquo;</span>
-                            <span>{subtopic}</span>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                          <span className="font-medium text-gray-600">{topic}</span>
+                          <span>&rsaquo;</span>
+                          <span>{subtopic}</span>
                         </div>
                       </td>
                       {BLOOMS_LEVELS.map(level => {
                         const cellMaterials = getMaterialsForCell(chapter, topic, subtopic, level);
                         const hasMaterial = cellMaterials.length > 0;
                         const materialCount = cellMaterials.length;
-                        
+
                         // Check moderation status
                         const hasPending = cellMaterials.some(m => m.status === MaterialStatus.PENDING);
                         const allApproved = cellMaterials.length > 0 && cellMaterials.every(m => m.status === MaterialStatus.APPROVED);
-                        
+
                         return (
                           <td key={level} className="px-4 py-3 text-center border-r last:border-r-0 relative group/cell align-middle h-16">
-                            
+
                             <div className="flex items-center justify-center w-full h-full">
-                                {hasMaterial ? (
-                                    <>
-                                        {/* Default View (Hidden on Hover) */}
-                                        <div className="flex flex-col items-center gap-1 group-hover/cell:opacity-0 transition-opacity duration-200">
-                                            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border shadow-sm ${
-                                                allApproved 
-                                                    ? 'bg-green-50 text-green-700 border-green-200' 
-                                                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                                            }`}>
-                                                {allApproved ? <CheckCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                                                <span>View ({materialCount})</span>
-                                            </div>
-                                            {hasPending && <span className="text-[9px] text-amber-600/60 font-medium mt-0.5">Under Review</span>}
-                                        </div>
+                              {hasMaterial ? (
+                                <>
+                                  {/* Default View (Hidden on Hover) */}
+                                  <div className="flex flex-col items-center gap-1 group-hover/cell:opacity-0 transition-opacity duration-200">
+                                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border shadow-sm ${allApproved
+                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                      }`}>
+                                      {allApproved ? <CheckCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                                      <span>View ({materialCount})</span>
+                                    </div>
+                                    {hasPending && <span className="text-[9px] text-amber-600/60 font-medium mt-0.5">Under Review</span>}
+                                  </div>
 
-                                        {/* Hover Options Overlay */}
-                                        <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover/cell:opacity-100 transition-opacity duration-200 bg-white/95 backdrop-blur-[1px]">
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setViewingMaterials(cellMaterials);
-                                                }}
-                                                className="flex flex-col items-center justify-center gap-1 text-xs text-gray-600 hover:text-indigo-600 transition-colors"
-                                                title="View Files"
-                                            >
-                                                <div className="p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:border-indigo-300 hover:shadow-md transition-all">
-                                                    <Eye className="w-4 h-4" />
-                                                </div>
-                                                <span className="font-medium text-[10px]">View</span>
-                                            </button>
-                                            
-                                            <div className="w-px h-8 bg-gray-200"></div>
+                                  {/* Hover Options Overlay */}
+                                  <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover/cell:opacity-100 transition-opacity duration-200 bg-white/95 backdrop-blur-[1px]">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setViewingMaterials(cellMaterials);
+                                      }}
+                                      className="flex flex-col items-center justify-center gap-1 text-xs text-gray-600 hover:text-indigo-600 transition-colors"
+                                      title="View Files"
+                                    >
+                                      <div className="p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:border-indigo-300 hover:shadow-md transition-all">
+                                        <Eye className="w-4 h-4" />
+                                      </div>
+                                      <span className="font-medium text-[10px]">View</span>
+                                    </button>
 
-                                            <button 
-                                                onClick={() => onNavigateToUpload({
-                                                    class: selectedClass,
-                                                    subject: selectedSubject,
-                                                    chapter: chapter,
-                                                    topic: topic,
-                                                    subtopic: subtopic,
-                                                    bloomsLevel: level
-                                                })}
-                                                className="flex flex-col items-center justify-center gap-1 text-xs text-gray-600 hover:text-blue-600 transition-colors"
-                                                title="Add More Content"
-                                            >
-                                                <div className="p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
-                                                    <Plus className="w-4 h-4" />
-                                                </div>
-                                                <span className="font-medium text-[10px]">Add</span>
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    /* State: Empty */
-                                    <>
-                                        <div className="w-2.5 h-2.5 rounded-full bg-gray-200 group-hover/cell:scale-0 transition-transform duration-200" />
-                                        
-                                        {/* Hover Upload Button */}
-                                        <button 
-                                            onClick={() => onNavigateToUpload({
-                                                class: selectedClass,
-                                                subject: selectedSubject,
-                                                chapter: chapter,
-                                                topic: topic,
-                                                subtopic: subtopic,
-                                                bloomsLevel: level
-                                            })}
-                                            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity duration-200"
-                                        >
-                                            <div className="flex items-center gap-1.5 text-[10px] text-blue-700 bg-blue-50 px-3 py-1.5 rounded shadow-sm border border-blue-100 hover:bg-blue-100">
-                                                <Plus className="w-3.5 h-3.5" />
-                                                <span className="font-medium">Upload</span>
-                                            </div>
-                                        </button>
-                                    </>
-                                )}
+                                    <div className="w-px h-8 bg-gray-200"></div>
+
+                                    <button
+                                      onClick={() => onNavigateToUpload({
+                                        class: selectedClass,
+                                        subject: selectedSubject,
+                                        chapter: chapter,
+                                        topic: topic,
+                                        subtopic: subtopic,
+                                        bloomsLevel: level
+                                      })}
+                                      className="flex flex-col items-center justify-center gap-1 text-xs text-gray-600 hover:text-blue-600 transition-colors"
+                                      title="Add More Content"
+                                    >
+                                      <div className="p-2 bg-white border border-gray-200 rounded-full shadow-sm hover:border-blue-300 hover:shadow-md transition-all">
+                                        <Plus className="w-4 h-4" />
+                                      </div>
+                                      <span className="font-medium text-[10px]">Add</span>
+                                    </button>
+                                  </div>
+                                </>
+                              ) : (
+                                /* State: Empty */
+                                <>
+                                  <div className="w-2.5 h-2.5 rounded-full bg-gray-200 group-hover/cell:scale-0 transition-transform duration-200" />
+
+                                  {/* Hover Upload Button */}
+                                  <button
+                                    onClick={() => onNavigateToUpload({
+                                      class: selectedClass,
+                                      subject: selectedSubject,
+                                      chapter: chapter,
+                                      topic: topic,
+                                      subtopic: subtopic,
+                                      bloomsLevel: level
+                                    })}
+                                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-opacity duration-200"
+                                  >
+                                    <div className="flex items-center gap-1.5 text-[10px] text-blue-700 bg-blue-50 px-3 py-1.5 rounded shadow-sm border border-blue-100 hover:bg-blue-100">
+                                      <Plus className="w-3.5 h-3.5" />
+                                      <span className="font-medium">Upload</span>
+                                    </div>
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </td>
                         );
@@ -404,7 +405,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
       </div>
 
       <div className="flex justify-end">
-        <button 
+        <button
           onClick={() => onNavigateToUpload()}
           className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors flex items-center gap-2"
         >
