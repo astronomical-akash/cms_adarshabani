@@ -1,13 +1,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { BloomsLevel } from '../types';
 
-// Declare process to satisfy TypeScript compiler since it's injected by Vite
+// Declare process to satisfy TypeScript compiler since it's injected by Vite during build
 declare var process: {
   env: {
     API_KEY: string;
   };
 };
 
+// Initialize Gemini API client
+// The API key is injected at build time by Vite
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Analyze a text description (and optional image) to suggest classification
@@ -80,7 +82,9 @@ export const analyzeContentForClassification = async (
         throw new Error("No response text received from Gemini");
     }
 
-    return JSON.parse(response.text);
+    // Sanitize the output - Gemini might wrap JSON in markdown code blocks
+    const cleanText = response.text.replace(/```json\n?|```/g, '').trim();
+    return JSON.parse(cleanText);
   } catch (error) {
     console.error("Gemini classification failed:", error);
     return null;
