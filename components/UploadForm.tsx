@@ -58,12 +58,16 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
   useEffect(() => {
     // Apply initial values if provided
     if (initialValues) {
-      if (initialValues.class) setSelectedClass(initialValues.class);
-      if (initialValues.subject) setSelectedSubject(initialValues.subject);
-      if (initialValues.chapter) setSelectedChapter(initialValues.chapter);
-      if (initialValues.topic) setSelectedTopic(initialValues.topic);
-      if (initialValues.subtopic) setSelectedSubtopic(initialValues.subtopic);
-      if (initialValues.bloomsLevel) setSelectedBlooms(initialValues.bloomsLevel);
+      try {
+        if (initialValues.class) setSelectedClass(initialValues.class);
+        if (initialValues.subject) setSelectedSubject(initialValues.subject);
+        if (initialValues.chapter) setSelectedChapter(initialValues.chapter);
+        if (initialValues.topic) setSelectedTopic(initialValues.topic);
+        if (initialValues.subtopic) setSelectedSubtopic(initialValues.subtopic);
+        if (initialValues.bloomsLevel) setSelectedBlooms(initialValues.bloomsLevel);
+      } catch (error) {
+        console.error('Error applying initial values:', error);
+      }
     }
   }, [initialValues]);
 
@@ -234,7 +238,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
         subtopic: selectedSubtopic,
         bloomsLevel: selectedBlooms,
         status: MaterialStatus.PENDING,
-        contributorName: currentUser?.name || 'Anonymous'
+        contributorName: currentUser?.full_name || currentUser?.email || 'Anonymous'
       };
 
       await saveMaterial(newMaterial);
