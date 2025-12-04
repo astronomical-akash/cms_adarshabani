@@ -56,7 +56,6 @@ export const Preview: React.FC<PreviewProps> = ({ material, onBack }) => {
                     src={material.url}
                     className="w-full h-full"
                     title={material.title}
-                    style={{ minHeight: '600px' }}
                 />
             );
         }
