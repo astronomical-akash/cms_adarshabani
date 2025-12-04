@@ -235,11 +235,12 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onSuccess, initialValues
     }
   };
 
-  // Derived Options
-  const subjects = selectedClass ? Object.keys(curriculum[selectedClass] || {}) : [];
-  const chapters = (selectedClass && selectedSubject) ? Object.keys(curriculum[selectedClass][selectedSubject] || {}) : [];
-  const topics = (selectedClass && selectedSubject && selectedChapter) ? Object.keys(curriculum[selectedClass][selectedSubject][selectedChapter] || {}) : [];
-  const subtopics = (selectedClass && selectedSubject && selectedChapter && selectedTopic)
+  // Get dropdowns based on selections
+  const classes = Object.keys(curriculum);
+  const subjects = (selectedClass && curriculum[selectedClass]) ? Object.keys(curriculum[selectedClass]) : [];
+  const chapters = (selectedClass && selectedSubject && curriculum[selectedClass]?.[selectedSubject]) ? Object.keys(curriculum[selectedClass][selectedSubject] || {}) : [];
+  const topics = (selectedClass && selectedSubject && selectedChapter && curriculum[selectedClass]?.[selectedSubject]?.[selectedChapter]) ? Object.keys(curriculum[selectedClass][selectedSubject][selectedChapter] || {}) : [];
+  const subtopics = (selectedClass && selectedSubject && selectedChapter && selectedTopic && curriculum[selectedClass]?.[selectedSubject]?.[selectedChapter]?.[selectedTopic])
     ? curriculum[selectedClass][selectedSubject][selectedChapter][selectedTopic] || []
     : [];
 
