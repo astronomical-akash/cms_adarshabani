@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { login, loginAnonymously } from '../services/authService';
+import { login } from '../services/authService';
 import { GraduationCap, ArrowRight, ShieldCheck, User, Loader2 } from 'lucide-react';
 
 interface LoginProps {
@@ -34,20 +34,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
     };
 
-    const handleGuestLogin = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        const { user, error: loginError } = await loginAnonymously();
-
-        if (user) {
-            onLogin();
-        } else {
-            setError(loginError || "Guest login failed. Anonymous sign-ins might be disabled.");
-            setIsLoading(false);
-        }
-    };
-
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
             <div className="mb-8 flex flex-col items-center">
@@ -63,8 +49,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <h2 className="text-xl font-semibold text-gray-800 mb-6">Sign in to your account</h2>
 
                     {error && (
-                        <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 flex items-center gap-2">
-                            <span className="font-bold">Error:</span> {error}
+                        <div className={`mb-4 p-3 text-sm rounded-lg border flex items-center gap-2 ${error.includes("approval") || error.includes("suspended") || error.includes("Registration successful")
+                            ? "bg-amber-50 text-amber-800 border-amber-200"
+                            : "bg-red-50 text-red-600 border-red-100"
+                            }`}>
+                            <span className="font-bold">
+                                {error.includes("approval") ? "Pending:" : error.includes("suspended") ? "Suspended:" : error.includes("Registration successful") ? "Success:" : "Error:"}
+                            </span>
+                            {error}
                         </div>
                     )}
 
@@ -129,26 +121,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Sign In / Sign Up <ArrowRight className="w-4 h-4" /></>}
                         </button>
-
-                        <div className="relative flex py-2 items-center">
-                            <div className="flex-grow border-t border-gray-200"></div>
-                            <span className="flex-shrink-0 mx-4 text-gray-400 text-xs">OR</span>
-                            <div className="flex-grow border-t border-gray-200"></div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleGuestLogin}
-                            disabled={isLoading}
-                            className="w-full bg-white text-gray-700 font-medium py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm"
-                        >
-                            Continue as Guest
-                        </button>
                     </form>
                 </div>
                 <div className="bg-gray-50 p-4 text-center border-t border-gray-100">
                     <p className="text-xs text-gray-500">
-                        This is a demo login. No password required.
+                        Secure access for authorized personnel only.
                     </p>
                 </div>
             </div>

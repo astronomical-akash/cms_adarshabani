@@ -5,18 +5,20 @@ import { UploadForm } from './components/UploadForm';
 import { Preview } from './components/Preview';
 import { HierarchyManager } from './components/HierarchyManager';
 import { ModeratorDashboard } from './components/ModeratorDashboard';
+import { AdminDashboard } from './components/AdminDashboard';
 import { Login } from './components/Login';
 import { getMaterials } from './services/storageService';
 import { getCurrentUser, logout } from './services/authService';
 import { Material, User, UserRole } from './types';
-import { LayoutDashboard, Upload, Network, ShieldCheck, GraduationCap, LogOut, User as UserIcon } from 'lucide-react';
+import { LayoutDashboard, Upload, Network, ShieldCheck, GraduationCap, LogOut, User as UserIcon, Shield } from 'lucide-react';
 
 enum View {
   DASHBOARD = 'dashboard',
   UPLOAD = 'upload',
   PREVIEW = 'preview',
   HIERARCHY = 'hierarchy',
-  MODERATOR = 'moderator'
+  MODERATOR = 'moderator',
+  ADMIN = 'admin'
 }
 
 const App: React.FC = () => {
@@ -100,11 +102,19 @@ const App: React.FC = () => {
         );
       case View.MODERATOR:
         // Protect route
-        if (user.role !== UserRole.MODERATOR) {
+        if (user.role !== UserRole.MODERATOR && user.role !== UserRole.ADMIN) {
           return <div className="p-8 text-center text-red-500">Access Denied</div>;
         }
         return (
           <ModeratorDashboard />
+        );
+      case View.ADMIN:
+        // Protect route
+        if (user.role !== UserRole.ADMIN) {
+          return <div className="p-8 text-center text-red-500">Access Denied</div>;
+        }
+        return (
+          <AdminDashboard />
         );
       case View.PREVIEW:
         return selectedMaterial ? (
@@ -154,7 +164,7 @@ const App: React.FC = () => {
         </nav>
 
         <div className="p-4 border-t border-gray-100 flex flex-col gap-3">
-          {user.role === UserRole.MODERATOR && (
+          {(user.role === UserRole.MODERATOR || user.role === UserRole.ADMIN) && (
             <button
               onClick={() => setCurrentView(View.MODERATOR)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded border transition-colors ${currentView === View.MODERATOR
@@ -164,6 +174,19 @@ const App: React.FC = () => {
             >
               <ShieldCheck className="w-4 h-4" />
               Moderator Dashboard
+            </button>
+          )}
+
+          {user.role === UserRole.ADMIN && (
+            <button
+              onClick={() => setCurrentView(View.ADMIN)}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded border transition-colors ${currentView === View.ADMIN
+                ? 'bg-indigo-900 text-white border-indigo-900'
+                : 'bg-white text-indigo-700 border-indigo-200 hover:border-indigo-300 hover:bg-indigo-50'
+                }`}
+            >
+              <Shield className="w-4 h-4" />
+              Admin Dashboard
             </button>
           )}
 

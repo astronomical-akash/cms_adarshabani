@@ -21,7 +21,8 @@ export enum MaterialStatus {
 
 export enum UserRole {
   CONTRIBUTOR = 'contributor',
-  MODERATOR = 'moderator'
+  MODERATOR = 'moderator',
+  ADMIN = 'admin'
 }
 
 export interface User {
@@ -29,6 +30,8 @@ export interface User {
   email?: string;
   full_name?: string;
   role: UserRole;
+  is_approved?: boolean;
+  is_banned?: boolean;
 }
 
 export interface Material {

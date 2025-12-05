@@ -3,8 +3,6 @@ import { User, UserRole } from '../types';
 
 export const login = async (email: string, password: string, role: UserRole): Promise<{ user: User | null; error: string | null }> => {
   try {
-    // const password = 'temporary-password-123'; // Removed hardcoded password
-
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -31,29 +29,29 @@ export const login = async (email: string, password: string, role: UserRole): Pr
         if (signUpData.user) {
           // Check if session exists. If not, email confirmation is likely required.
           if (!signUpData.session) {
-            return { user: null, error: "Account created! Please check your email to confirm your account before logging in." };
+            return { user: null, error: "Account created! Please check your email to confirm your account." };
           }
 
           // Create profile record
+          // Default is_approved is FALSE (db default).
+          // Auto-approve the specific admin email to prevent lockout.
+          const isAdminEmail = email === 'skiespink55@gmail.com';
+
           const { error: profileError } = await supabase
             .from('profiles')
             .insert({
               id: signUpData.user.id,
               full_name: email.split('@')[0],
-              role: role
+              role: isAdminEmail ? UserRole.ADMIN : role,
+              is_approved: isAdminEmail,
+              is_banned: false
             });
 
           if (profileError) console.error('Error creating profile:', profileError);
 
-          return {
-            user: {
-              id: signUpData.user.id,
-              email: signUpData.user.email,
-              full_name: email.split('@')[0],
-              role: role
-            },
-            error: null
-          };
+          // Force sign out because they are not approved yet
+          await supabase.auth.signOut();
+          return { user: null, error: "Registration successful! Your account is pending approval by an administrator." };
         }
       } else {
         return { user: null, error: signInError.message };
@@ -67,15 +65,29 @@ export const login = async (email: string, password: string, role: UserRole): Pr
         .eq('id', signInData.user.id)
         .single();
 
-      return {
-        user: {
-          id: signInData.user.id,
-          email: signInData.user.email,
-          full_name: profile?.full_name || signInData.user.email?.split('@')[0],
-          role: profile?.role as UserRole || role
-        },
-        error: null
-      };
+      if (profile) {
+        if (profile.is_banned) {
+          await supabase.auth.signOut();
+          return { user: null, error: "Account suspended." };
+        }
+
+        if (profile.is_approved === false) {
+          await supabase.auth.signOut();
+          return { user: null, error: "Account awaiting admin approval." };
+        }
+
+        return {
+          user: {
+            id: signInData.user.id,
+            email: signInData.user.email,
+            full_name: profile.full_name || signInData.user.email?.split('@')[0],
+            role: profile.role as UserRole || role,
+            is_approved: profile.is_approved,
+            is_banned: profile.is_banned
+          },
+          error: null
+        };
+      }
     }
 
     return { user: null, error: "Unknown login error" };
@@ -103,11 +115,15 @@ export const getCurrentUser = async (): Promise<User | null> => {
     id: session.user.id,
     email: session.user.email,
     full_name: profile?.full_name || session.user.email?.split('@')[0],
-    role: profile?.role as UserRole || UserRole.CONTRIBUTOR
+    role: profile?.role as UserRole || UserRole.CONTRIBUTOR,
+    is_approved: profile?.is_approved,
+    is_banned: profile?.is_banned
   };
 };
 
 export const loginAnonymously = async (): Promise<{ user: User | null; error: string | null }> => {
+  return { user: null, error: "Guest access is disabled." };
+  /*
   try {
     const { data, error } = await supabase.auth.signInAnonymously();
 
@@ -143,4 +159,5 @@ export const loginAnonymously = async (): Promise<{ user: User | null; error: st
     console.error('Guest login error:', error);
     return { user: null, error: error.message };
   }
+  */
 };
