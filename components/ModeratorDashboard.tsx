@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Material, MaterialStatus } from '../types';
-import { getMaterials, updateMaterialStatus } from '../services/storageService';
-import { Check, X, ShieldCheck, Clock, User, BarChart } from 'lucide-react';
+import { getMaterials, updateMaterialStatus, deleteMaterial } from '../services/storageService';
+import { Check, X, ShieldCheck, Clock, User, BarChart, Trash2 } from 'lucide-react';
 
 export const ModeratorDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'review' | 'analytics'>('review');
@@ -20,6 +20,14 @@ export const ModeratorDashboard: React.FC = () => {
         await updateMaterialStatus(id, status);
         const data = await getMaterials(); // Refresh
         setMaterials(data);
+    };
+
+    const handleReject = async (id: string) => {
+        if (window.confirm('Are you sure you want to REJECT and DELETE this material? This action cannot be undone.')) {
+            await deleteMaterial(id);
+            const data = await getMaterials(); // Refresh
+            setMaterials(data);
+        }
     };
 
     const pendingMaterials = materials.filter(m => m.status === MaterialStatus.PENDING);
@@ -144,11 +152,12 @@ export const ModeratorDashboard: React.FC = () => {
                                             Approve
                                         </button>
                                         <button
-                                            onClick={() => handleStatusUpdate(item.id, MaterialStatus.REJECTED)}
+                                            onClick={() => handleReject(item.id)}
                                             className="flex-1 bg-white text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-50 hover:border-red-300 flex items-center justify-center gap-2 transition-colors"
+                                            title="Permanently Delete"
                                         >
-                                            <X className="w-4 h-4" />
-                                            Reject
+                                            <Trash2 className="w-4 h-4" />
+                                            Reject & Delete
                                         </button>
                                     </div>
                                 </div>

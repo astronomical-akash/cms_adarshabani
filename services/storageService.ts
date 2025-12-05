@@ -84,6 +84,41 @@ export const updateMaterialStatus = async (id: string, status: MaterialStatus): 
 };
 
 export const deleteMaterial = async (id: string): Promise<void> => {
+  // 1. Get the material to find the file URL
+  const { data: material, error: fetchError } = await supabase
+    .from('materials')
+    .select('url')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching material for deletion:', fetchError);
+    // Proceed to try deleting the row anyway, in case it's a data consistency issue
+  }
+
+  // 2. Delete file from storage if URL exists
+  if (material?.url) {
+    try {
+      // Extract path from URL. Assumes URL structure: .../storage/v1/object/public/materials/folder/filename.ext
+      const urlParts = material.url.split('/materials/');
+      if (urlParts.length > 1) {
+        const filePath = decodeURIComponent(urlParts[1]);
+
+        const { error: storageError } = await supabase.storage
+          .from('materials')
+          .remove([filePath]);
+
+        if (storageError) {
+          console.error('Error deleting file from storage:', storageError);
+          // We continue to delete the row even if storage delete fails to prevent "stuck" records
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing material URL during deletion:', e);
+    }
+  }
+
+  // 3. Delete the record from database
   const { error } = await supabase
     .from('materials')
     .delete()
@@ -91,6 +126,7 @@ export const deleteMaterial = async (id: string): Promise<void> => {
 
   if (error) {
     console.error('Error deleting material:', error);
+    throw error;
   }
 };
 

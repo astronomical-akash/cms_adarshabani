@@ -1,17 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Material, BloomsLevel, CurriculumTree, MaterialStatus } from '../types';
 import { BLOOMS_LEVELS, BLOOMS_DESCRIPTIONS } from '../constants';
-import { getCurriculum } from '../services/storageService';
+import { getCurriculum, deleteMaterial } from '../services/storageService';
 import { generateGapAnalysis } from '../services/geminiService';
-import { Sparkles, BarChart2, CheckCircle, Upload, Clock, Plus, X, FileText, Image, Film, ChevronRight, Eye } from 'lucide-react';
+import { Sparkles, BarChart2, CheckCircle, Upload, Clock, Plus, X, FileText, Image, Film, ChevronRight, Eye, Trash2 } from 'lucide-react';
 
 interface DashboardProps {
   materials: Material[];
   onNavigateToUpload: (defaults?: any) => void;
   onPreview: (material: Material) => void;
+  onRefresh?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpload, onPreview }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpload, onPreview, onRefresh }) => {
   const [curriculum, setCurriculum] = useState<CurriculumTree>({});
 
   // Selections
@@ -108,6 +109,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
   // Filter chapters based on selection
   const visibleChapters = selectedChapter ? [selectedChapter] : allChapters;
 
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+      try {
+        await deleteMaterial(id);
+        if (onRefresh) onRefresh();
+
+        // Update local viewing materials if modal is open
+        if (viewingMaterials) {
+          const updated = viewingMaterials.filter(m => m.id !== id);
+          if (updated.length === 0) {
+            setViewingMaterials(null);
+          } else {
+            setViewingMaterials(updated);
+          }
+        }
+      } catch (error) {
+        alert('Failed to delete material');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 relative">
 
@@ -183,8 +207,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
                       </div>
                     </div>
 
-                    <div className="text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all">
-                      <ChevronRight className="w-5 h-5" />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => handleDelete(material.id, e)}
+                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <div className="text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all">
+                        <ChevronRight className="w-5 h-5" />
+                      </div>
                     </div>
                   </div>
                 ))}

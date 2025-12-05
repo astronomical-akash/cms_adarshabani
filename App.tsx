@@ -39,14 +39,15 @@ const App: React.FC = () => {
     checkUser();
   }, []);
 
+  // Load data function
+  const loadMaterials = async () => {
+    if (user) {
+      const data = await getMaterials();
+      setMaterials(data);
+    }
+  };
+
   useEffect(() => {
-    // Load initial data
-    const loadMaterials = async () => {
-      if (user) {
-        const data = await getMaterials();
-        setMaterials(data);
-      }
-    };
     loadMaterials();
   }, [currentView, user]);
 
@@ -84,6 +85,7 @@ const App: React.FC = () => {
             materials={materials}
             onNavigateToUpload={handleNavigateToUpload}
             onPreview={handlePreview}
+            onRefresh={loadMaterials}
           />
         );
       case View.UPLOAD:
