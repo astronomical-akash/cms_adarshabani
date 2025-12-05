@@ -65,6 +65,24 @@ export const upsertAssignment = async (assignmentData: Partial<Assignment>) => {
     return data;
 };
 
+export const updateAssignmentStatus = async (id: string, status: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+        .from('assignments')
+        .update({
+            status: status,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
 export const getMyAssignments = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');

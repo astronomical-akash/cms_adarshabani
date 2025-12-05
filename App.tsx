@@ -7,6 +7,7 @@ import { HierarchyManager } from './components/HierarchyManager';
 import { ModeratorDashboard } from './components/ModeratorDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { TaskTracker } from './components/TaskTracker';
+import { MyTasks } from './components/MyTasks';
 import { Login } from './components/Login';
 import { getMaterials } from './services/storageService';
 import { getCurrentUser, logout } from './services/authService';
@@ -20,7 +21,8 @@ enum View {
   HIERARCHY = 'hierarchy',
   MODERATOR = 'moderator',
   ADMIN = 'admin',
-  TRACKER = 'tracker'
+  TRACKER = 'tracker',
+  MY_TASKS = 'my_tasks'
 }
 
 const App: React.FC = () => {
@@ -125,6 +127,8 @@ const App: React.FC = () => {
           return <div className="p-8 text-center text-red-500">Access Denied</div>;
         }
         return <TaskTracker />;
+      case View.MY_TASKS:
+        return <MyTasks />;
       case View.PREVIEW:
         return selectedMaterial ? (
           <Preview
@@ -170,6 +174,16 @@ const App: React.FC = () => {
             <Network className="w-5 h-5" />
             Manage Hierarchy
           </button>
+
+          {user.role === UserRole.CONTRIBUTOR && (
+            <button
+              onClick={() => setCurrentView(View.MY_TASKS)}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${currentView === View.MY_TASKS ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <ListTodo className="w-5 h-5" />
+              My Tasks
+            </button>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-100 flex flex-col gap-3">
