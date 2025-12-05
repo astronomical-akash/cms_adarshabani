@@ -6,11 +6,12 @@ import { Preview } from './components/Preview';
 import { HierarchyManager } from './components/HierarchyManager';
 import { ModeratorDashboard } from './components/ModeratorDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
+import { TaskTracker } from './components/TaskTracker';
 import { Login } from './components/Login';
 import { getMaterials } from './services/storageService';
 import { getCurrentUser, logout } from './services/authService';
 import { Material, User, UserRole } from './types';
-import { LayoutDashboard, Upload, Network, ShieldCheck, GraduationCap, LogOut, User as UserIcon, Shield } from 'lucide-react';
+import { LayoutDashboard, Upload, Network, ShieldCheck, GraduationCap, LogOut, User as UserIcon, Shield, ListTodo } from 'lucide-react';
 
 enum View {
   DASHBOARD = 'dashboard',
@@ -18,7 +19,8 @@ enum View {
   PREVIEW = 'preview',
   HIERARCHY = 'hierarchy',
   MODERATOR = 'moderator',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
+  TRACKER = 'tracker'
 }
 
 const App: React.FC = () => {
@@ -118,6 +120,11 @@ const App: React.FC = () => {
         return (
           <AdminDashboard />
         );
+      case View.TRACKER:
+        if (user.role !== UserRole.MODERATOR && user.role !== UserRole.ADMIN) {
+          return <div className="p-8 text-center text-red-500">Access Denied</div>;
+        }
+        return <TaskTracker />;
       case View.PREVIEW:
         return selectedMaterial ? (
           <Preview
@@ -176,6 +183,19 @@ const App: React.FC = () => {
             >
               <ShieldCheck className="w-4 h-4" />
               Moderator Dashboard
+            </button>
+          )}
+
+          {(user.role === UserRole.MODERATOR || user.role === UserRole.ADMIN) && (
+            <button
+              onClick={() => setCurrentView(View.TRACKER)}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium rounded border transition-colors ${currentView === View.TRACKER
+                ? 'bg-blue-900 text-white border-blue-900'
+                : 'bg-white text-blue-700 border-blue-200 hover:border-blue-300 hover:bg-blue-50'
+                }`}
+            >
+              <ListTodo className="w-4 h-4" />
+              Task Tracker
             </button>
           )}
 

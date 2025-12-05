@@ -3,7 +3,8 @@ import { Material, BloomsLevel, CurriculumTree, MaterialStatus } from '../types'
 import { BLOOMS_LEVELS, BLOOMS_DESCRIPTIONS } from '../constants';
 import { getCurriculum, deleteMaterial } from '../services/storageService';
 import { generateGapAnalysis } from '../services/geminiService';
-import { Sparkles, BarChart2, CheckCircle, Upload, Clock, Plus, X, FileText, Image, Film, ChevronRight, Eye, Trash2 } from 'lucide-react';
+import { getMyAssignments, Assignment } from '../services/taskService';
+import { Sparkles, BarChart2, CheckCircle, Upload, Clock, Plus, X, FileText, Image, Film, ChevronRight, Eye, Trash2, Calendar, MessageSquare } from 'lucide-react';
 
 interface DashboardProps {
   materials: Material[];
@@ -22,6 +23,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
 
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const [myAssignments, setMyAssignments] = useState<Assignment[]>([]);
+
+  useEffect(() => {
+    const fetchMyTasks = async () => {
+      try {
+        const data = await getMyAssignments();
+        setMyAssignments(data);
+      } catch (e) {
+        console.error("Error fetching assignments", e);
+      }
+    };
+    fetchMyTasks();
+  }, []);
 
   // Modal State for viewing multiple items
   const [viewingMaterials, setViewingMaterials] = useState<Material[] | null>(null);
@@ -335,6 +350,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
                           <span>&rsaquo;</span>
                           <span>{subtopic}</span>
                         </div>
+
                       </td>
                       {BLOOMS_LEVELS.map(level => {
                         const cellMaterials = getMaterialsForCell(chapter, topic, subtopic, level);
@@ -345,8 +361,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
                         const hasPending = cellMaterials.some(m => m.status === MaterialStatus.PENDING);
                         const allApproved = cellMaterials.length > 0 && cellMaterials.every(m => m.status === MaterialStatus.APPROVED);
 
+                        // Check assignment
+                        const assignment = myAssignments.find(a =>
+                          a.class_name === selectedClass &&
+                          a.subject === selectedSubject &&
+                          a.chapter === chapter &&
+                          a.topic === topic
+                        );
+
                         return (
-                          <td key={level} className="px-4 py-3 text-center border-r last:border-r-0 relative group/cell align-middle h-16">
+                          <td key={level} className={`px-4 py-3 text-center border-r last:border-r-0 relative group/cell align-middle h-16 ${assignment ? 'bg-yellow-50/50' : ''}`}>
+                            {assignment && level === BloomsLevel.LEVEL_0 && ( // Show indicator only once per row, e.g. on first cell
+                              <div className="absolute top-1 left-1 text-yellow-600 z-10 group/info">
+                                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                                {/* Tooltip */}
+                                <div className="hidden group-hover/info:block absolute left-4 top-0 w-64 bg-white p-3 rounded-lg shadow-xl border border-yellow-200 z-[50] text-left">
+                                  <div className="text-xs font-bold text-gray-900 mb-1">Assigned to You</div>
+                                  <div className="text-xs text-gray-600 flex items-center gap-1 mb-1">
+                                    <Calendar className="w-3 h-3" />
+                                    Due: {assignment.due_date ? new Date(assignment.due_date).toLocaleDateString() : 'No Date'}
+                                  </div>
+                                  {assignment.comments && (
+                                    <div className="text-xs text-gray-500 flex items-start gap-1 p-1 bg-yellow-50 rounded">
+                                      <MessageSquare className="w-3 h-3 mt-0.5 shrink-0" />
+                                      <span className="italic">{assignment.comments}</span>
+                                    </div>
+                                  )}
+                                  <div className="mt-2 text-xs font-medium text-indigo-600">
+                                    Status: {assignment.status.replace('_', ' ').toUpperCase()}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
                             <div className="flex items-center justify-center w-full h-full">
                               {hasMaterial ? (
@@ -446,6 +492,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
           <span>Upload Missing Content</span>
         </button>
       </div>
-    </div>
+    </div >
   );
 };
