@@ -118,8 +118,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
 
   // Get structure for table
   const currentStructure = curriculum[selectedClass]?.[selectedSubject] || {};
-  // Sort chapters alphabetically for better organization
-  const allChapters = Object.keys(currentStructure).sort();
+  // Use the order defined in currentStructure (which matches Manage Hierarchy order)
+  const allChapters = Object.keys(currentStructure);
 
   // Filter chapters based on selection
   const visibleChapters = selectedChapter ? [selectedChapter] : allChapters;
@@ -333,15 +333,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ materials, onNavigateToUpl
                 const topicsObj = currentStructure[chapter];
                 if (!topicsObj) return null;
 
-                // Sort topics alphabetically
-                const topicNames = Object.keys(topicsObj).sort();
+                // Use the order defined in topicsObj
+                const topicNames = Object.keys(topicsObj);
                 if (topicNames.length === 0) return null;
 
                 return topicNames.map((topic) => {
                   const subtopics = topicsObj[topic];
 
-                  // Sort subtopics alphabetically
-                  return subtopics.sort().map((subtopic: string) => (
+                  // Use the order defined in subtopics array
+                  return subtopics.map((subtopic: string) => (
                     <tr key={`${chapter}-${topic}-${subtopic}`} className="hover:bg-gray-50 group/row">
                       <td className="px-4 py-3 border-r bg-white">
                         <div className="font-semibold text-gray-800">{chapter}</div>
